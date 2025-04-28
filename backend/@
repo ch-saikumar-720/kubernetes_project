@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-backend-deployment
+  labels:
+    app: flask-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-backend
+  template:
+    metadata:
+      labels:
+        app: flask-backend
+    spec:
+      containers:
+        - name: flask-backend
+          image: 211125549407.dkr.ecr.us-east-1.amazonaws.com/kubes:back
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_APP
+              value: "app.py"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+            requests:
+              memory: "256Mi"
+              cpu: "0.5"
+---
+
