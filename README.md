@@ -81,5 +81,27 @@ Now access the load balance DNS address that will be given by the svc. The AWS w
 Access in the chrome with LoadBalance DNS we have the front end.
 
 **Using ingress:**
+. **Install NGINX Ingress Controller via Helm**
 
-i
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm install nginx-ingress ingress-nginx/ingress-nginx --create-namespace --namespace ingress-nginx
+
+kubectl get pods -n ingress-nginx
+
+kubectl get svc -n ingress-nginx
+
+**Congifiguring Ingress:**
+
+Create ingress yal files for both frontend and backend.
+Change the service type to Cluster IP for both front end and backend.
+
+first do the backend and check whether it is accessible through load baancer with /api.
+
+then do changes in the frontend src folders Signup and Login files.
+Add the backend ingress load balancer with namespace.
+
+create the docker images and add it in the deployment and run the deployment again
+
+Now wait for 2 mins and access the front end and check the backend communication.
