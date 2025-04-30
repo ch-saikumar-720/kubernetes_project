@@ -8,13 +8,13 @@ pipeline {
     CLUSTER_NAME = 'your-eks-cluster-name'
     BACKEND_IMAGE = "${ECR_REGISTRY}/${REPO_NAME}/backend:latest"
     FRONTEND_IMAGE = "${ECR_REGISTRY}/${REPO_NAME}/frontend:latest"
+    KUBECONFIG = '/var/lib/jenkins/.kube/config'
   }
 
   stages {
-    stage('Checkout Code from GitHub') {
+    stage('Checkout') {
       steps {
-        // Clone the GitHub repository
-        git 'https://github.com/ch-saikumar-720/flask-app-by-saikumar.git'
+        checkout scm
       }
     }
 
@@ -22,7 +22,7 @@ pipeline {
       steps {
         sh '''
           aws ecr get-login-password --region $AWS_REGION | \
-            docker login --username AWS --password-stdin $ECR_REGISTRY
+          docker login --username AWS --password-stdin $ECR_REGISTRY
         '''
       }
     }
@@ -46,7 +46,7 @@ pipeline {
       }
     }
 
-    stage('Deploy to EKS') {
+    stage('Deploy MySQL and Backend') {
       steps {
         sh '''
           kubectl apply -f k8s/mysql.yaml
@@ -55,17 +55,26 @@ pipeline {
       }
     }
 
-    stage('Get Backend Load Balancer DNS') {
+    stage('Wait for Backend LB') {
       steps {
         script {
-          // Get the DNS name of the backend LoadBalancer
-          def lb_dns = sh(script: "kubectl get svc backend-service -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}'", returnStdout: true).trim()
-          echo "Backend Load Balancer DNS: $lb_dns"
+          def lb_dns = ''
+          timeout(time: 3, unit: 'MINUTES') {
+            waitUntil {
+              lb_dns = sh(
+                script: "kubectl get svc backend-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'",
+                returnStdout: true
+              ).trim()
+              return lb_dns != ''
+            }
+          }
 
-          // Replace the backend URL in signup.js and login.js with the backend Load Balancer DNS
+          echo "Backend LoadBalancer DNS: ${lb_dns}"
+
+          // Update frontend JS files
           sh """
-            sed -i 's|http://backend-service|http://$lb_dns|' frontend/src/signup.js
-            sed -i 's|http://backend-service|http://$lb_dns|' frontend/src/login.js
+            sed -i "s|http://.*:5000|http://${lb_dns}:5000|g" frontend/src/login.js
+            sed -i "s|http://.*:5000|http://${lb_dns}:5000|g" frontend/src/signup.js
           """
         }
       }
@@ -82,11 +91,17 @@ pipeline {
       }
     }
 
-    stage('Deploy Frontend to EKS') {
+    stage('Deploy Frontend') {
       steps {
         sh '''
           kubectl apply -f k8s/frontend.yaml
         '''
+      }
+    }
+
+    stage('Test K8s Access') {
+      steps {
+        sh 'kubectl get nodes'
       }
     }
   }
