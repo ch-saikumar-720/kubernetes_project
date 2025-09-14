@@ -4,13 +4,20 @@ on:
   workflow_dispatch: # Manual trigger
 
 jobs:
-  # Job 1: Create S3 backend bucket
-  create-backend:
+  terraform:
     runs-on: ubuntu-latest
+    environment:
+      name: terraform-apply  # Manual approval environment
+    env:
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -18,74 +25,42 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Create Terraform backend S3 bucket
+      # Create Terraform backend S3 bucket (if missing)
+      - name: Ensure S3 backend exists
         run: |
           aws s3api create-bucket \
             --bucket my-terraform-state-us-east1 \
             --region us-east-1 || echo "Bucket already exists"
 
-  # Job 2: Terraform Plan
-  plan:
-    needs: create-backend
-    runs-on: ubuntu-latest
-    env:
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
+      # Terraform Init with backend reconfiguration
       - name: Terraform Init
         run: |
           cd iac_tf
           terraform init -reconfigure
 
+      # Terraform Plan
       - name: Terraform Plan
         id: plan
         run: |
           cd iac_tf
           terraform plan -out=tfplan
 
+      # Upload Plan Artifact
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: iac_tf/tfplan
 
-  # Job 3: Terraform Apply (manual approval)
-  apply:
-    needs: plan
-    runs-on: ubuntu-latest
-    environment:
-      name: terraform-apply  # GitHub Environment with required approval
-    env:
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-
-      - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: iac_tf/
-
+      # Terraform Apply (manual approval required)
       - name: Terraform Apply
+        if: github.event_name == 'workflow_dispatch' # Only run after approval
         run: |
           cd iac_tf
           terraform apply -auto-approve tfplan
