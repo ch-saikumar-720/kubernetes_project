@@ -1,3 +1,4 @@
+# Provider
 provider "aws" {
   region = "us-east-1"
 }
@@ -52,18 +53,3 @@ resource "aws_instance" "ec2_instance" {
     Name = "terraform-ec2-instance"
   }
 }
-
-# S3 Bucket for other project purposes
-resource "aws_s3_bucket" "project_bucket" {
-  bucket = "my-project-bucket-12345" # Must be globally unique
-  acl    = "private"
-
-  versioning {
-    enabled = true
-  }
-
-  tags = {
-    Name = "ProjectBucket"
-  }
-}
-
