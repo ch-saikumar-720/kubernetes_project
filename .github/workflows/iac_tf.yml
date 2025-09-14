@@ -14,30 +14,35 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Terraform
+      # Setup Terraform
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
+      # Terraform Init
       - name: Terraform Init
         run: |
-          cd kubernetes_project/iac_tf
+          cd iac_tf
           terraform init
 
+      # Terraform Plan
       - name: Terraform Plan
         id: plan
         run: |
-          cd kubernetes_project/iac_tf
+          cd iac_tf
           terraform plan -out=tfplan
 
+      # Upload plan artifact
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: kubernetes_project/iac_tf/tfplan
+          path: iac_tf/tfplan
 
   apply:
     name: Terraform Apply
@@ -45,7 +50,7 @@ jobs:
     needs: plan
     environment:
       name: terraform-apply
-      # Set yourself as a required reviewer in GitHub environments
+      # Requires manual approval in GitHub environment
 
     env:
       AWS_REGION: us-east-1
@@ -53,21 +58,25 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Terraform
+      # Setup Terraform
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
+      # Download Plan Artifact
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: kubernetes_project/iac_tf/
+          path: iac_tf/
 
+      # Terraform Apply
       - name: Terraform Apply
         run: |
-          cd kubernetes_project/iac_tf
+          cd iac_tf
           terraform apply -auto-approve tfplan
