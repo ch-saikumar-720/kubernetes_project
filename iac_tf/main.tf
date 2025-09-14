@@ -10,9 +10,9 @@ data "aws_vpc" "default" {
 
 # Security Group
 resource "aws_security_group" "ec2_sg" {
-  name        = "ec2_sg_${var.env}"  # Add environment or unique suffix
+  name        = "ec2_sg_${var.env}"
   description = "Security group for EC2 instances"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = data.aws_vpc.default.id
 
   ingress {
     from_port   = 22
@@ -27,11 +27,9 @@ resource "aws_security_group" "ec2_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
 
   tags = {
-    Name = "ec2_sg"
+    Name = "ec2_sg_${var.env}"
   }
 }
 
@@ -43,6 +41,6 @@ resource "aws_instance" "ec2_instance" {
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
 
   tags = {
-    Name = "terraform-ec2-instance"
+    Name = "terraform-ec2-instance-${var.env}"
   }
 }
