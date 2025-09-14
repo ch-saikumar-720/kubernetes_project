@@ -30,11 +30,9 @@ jobs:
       AWS_REGION: ${{ github.event.inputs.region }}
 
     steps:
-      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Configure AWS credentials from single account (GitHub secrets)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -42,13 +40,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
-      # Terraform Init with fixed backend bucket
       - name: Terraform Init
         run: |
           cd iac_tf
@@ -58,20 +54,17 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="encrypt=true"
 
-      # Terraform Workspace (optional)
       - name: Select/Create Terraform Workspace
         run: |
           cd iac_tf
-          terraform workspace select $TF_ENV || terraform workspace new $TF_ENV
+          terraform workspace select -or-create $TF_ENV
 
-      # Terraform Plan
       - name: Terraform Plan
         id: plan
         run: |
           cd iac_tf
           terraform plan -out=tfplan
 
-      # Terraform Apply
       - name: Terraform Apply
         run: |
           cd iac_tf
