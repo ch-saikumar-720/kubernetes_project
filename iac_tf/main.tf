@@ -1,3 +1,12 @@
+provider "aws" {
+  region = "us-east-1"
+}
+
+# Data source for default VPC
+data "aws_vpc" "default" {
+  default = true
+}
+
 # Security Group
 resource "aws_security_group" "ec2_sg" {
   name        = "ec2_sg"
@@ -44,8 +53,17 @@ resource "aws_instance" "ec2_instance" {
   }
 }
 
-# Data source for default VPC
-data "aws_vpc" "default" {
-  default = true
+# S3 Bucket for other project purposes
+resource "aws_s3_bucket" "project_bucket" {
+  bucket = "my-project-bucket-12345" # Must be globally unique
+  acl    = "private"
+
+  versioning {
+    enabled = true
+  }
+
+  tags = {
+    Name = "ProjectBucket"
+  }
 }
 
