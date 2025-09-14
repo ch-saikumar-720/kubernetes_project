@@ -20,3 +20,8 @@ variable "ami_id" {
   type        = string
 }
 
+variable "env" {
+  description = "The environment name (dev, test, prod)"
+  type        = string
+  default     = "dev"
+}
