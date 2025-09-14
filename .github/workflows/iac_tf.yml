@@ -1,7 +1,7 @@
 name: Terraform Infrastructure
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger
 
 jobs:
   plan:
@@ -28,7 +28,7 @@ jobs:
       - name: Terraform Init
         run: |
           cd iac_tf
-          terraform init
+          terraform init -reconfigure
 
       # Terraform Plan
       - name: Terraform Plan
@@ -37,7 +37,7 @@ jobs:
           cd iac_tf
           terraform plan -out=tfplan
 
-      # Upload plan artifact
+      # Upload Plan Artifact
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
