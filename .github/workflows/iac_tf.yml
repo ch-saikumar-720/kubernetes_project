@@ -17,17 +17,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Create Terraform backend S3 bucket
+      - name: Create Terraform backend S3 bucket (us-east-1)
         run: |
           aws s3api create-bucket \
             --bucket my-terraform-state-us-east1 \
-            --region us-east-1 \
-            --create-bucket-configuration LocationConstraint=us-east-1 || echo "Bucket already exists"
+            --region us-east-1 || echo "Bucket already exists"
 
   plan:
     needs: create-backend
     runs-on: ubuntu-latest
-
     env:
       AWS_REGION: us-east-1
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -63,7 +61,7 @@ jobs:
     needs: plan
     runs-on: ubuntu-latest
     environment:
-      name: terraform-apply  # Requires manual approval
+      name: terraform-apply  # GitHub Environment with required approval
 
     env:
       AWS_REGION: us-east-1
@@ -77,15 +75,4 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7
-
-      - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: iac_tf/
-
-      - name: Terraform Apply
-        run: |
-          cd iac_tf
-          terraform apply -auto-approve tfplan
+          terraf
