@@ -4,8 +4,28 @@ on:
   workflow_dispatch: # Manual trigger
 
 jobs:
+  create-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Create Terraform backend S3 bucket
+        run: |
+          aws s3api create-bucket \
+            --bucket my-terraform-state-us-east1 \
+            --region us-east-1 \
+            --create-bucket-configuration LocationConstraint=us-east-1 || echo "Bucket already exists"
+
   plan:
-    name: Terraform Plan
+    needs: create-backend
     runs-on: ubuntu-latest
 
     env:
@@ -14,30 +34,25 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
-      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
-      # Terraform Init
       - name: Terraform Init
         run: |
           cd iac_tf
           terraform init -reconfigure
 
-      # Terraform Plan
       - name: Terraform Plan
         id: plan
         run: |
           cd iac_tf
           terraform plan -out=tfplan
 
-      # Upload Plan Artifact
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -45,12 +60,10 @@ jobs:
           path: iac_tf/tfplan
 
   apply:
-    name: Terraform Apply
-    runs-on: ubuntu-latest
     needs: plan
+    runs-on: ubuntu-latest
     environment:
-      name: terraform-apply
-      # Requires manual approval in GitHub environment
+      name: terraform-apply  # Requires manual approval
 
     env:
       AWS_REGION: us-east-1
@@ -58,24 +71,20 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
-      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
 
-      # Download Plan Artifact
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
         with:
           name: tfplan
           path: iac_tf/
 
-      # Terraform Apply
       - name: Terraform Apply
         run: |
           cd iac_tf
