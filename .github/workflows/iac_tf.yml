@@ -63,9 +63,9 @@ jobs:
         id: plan
         run: |
           cd iac_tf
-          terraform plan -out=tfplan
+          terraform plan -var="env=${TF_ENV}" -out=tfplan
 
       - name: Terraform Apply
         run: |
           cd iac_tf
-          terraform apply -auto-approve tfplan
+          terraform apply -var="env=${TF_ENV}" -auto-approve tfplan
