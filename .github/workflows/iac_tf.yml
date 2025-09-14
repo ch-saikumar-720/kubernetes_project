@@ -10,7 +10,7 @@ on:
         type: choice
         options:
           - dev
-          - pod
+          - test
           - prod
       region:
         description: "Select AWS region"
