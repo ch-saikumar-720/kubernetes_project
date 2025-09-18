@@ -21,13 +21,24 @@ on:
           - us-east-1
           - us-west-2
           - us-east-2
+      action:
+        description: "Select Terraform action"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
 
 jobs:
   terraform:
+    name: Terraform ${{ github.event.inputs.action }}
     runs-on: ubuntu-latest
+
     env:
       TF_ENV: ${{ github.event.inputs.env }}
       AWS_REGION: ${{ github.event.inputs.region }}
+      TF_ACTION: ${{ github.event.inputs.action }}
 
     steps:
       - name: Checkout repository
@@ -57,15 +68,17 @@ jobs:
       - name: Select/Create Terraform Workspace
         run: |
           cd iac_tf
-          terraform workspace select -or-create $TF_ENV
+          terraform workspace select $TF_ENV || terraform workspace new $TF_ENV
 
-      - name: Terraform Plan
-        id: plan
+      - name: Terraform Apply or Destroy
         run: |
           cd iac_tf
-          terraform plan -var="env=${TF_ENV}" -out=tfplan
-
-      - name: Terraform Apply
-        run: |
-          cd iac_tf
-          terraform apply -auto-approve tfplan
+          if [[ "$TF_ACTION" == "apply" ]]; then
+            terraform plan -var="env=${TF_ENV}" -out=tfplan
+            terraform apply -auto-approve tfplan
+          elif [[ "$TF_ACTION" == "destroy" ]]; then
+            terraform destroy -auto-approve -var="env=${TF_ENV}"
+          else
+            echo "Invalid action: $TF_ACTION"
+            exit 1
+          fi
