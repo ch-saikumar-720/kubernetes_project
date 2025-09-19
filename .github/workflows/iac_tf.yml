@@ -49,11 +49,7 @@ jobs:
       - name: Terraform Init
         run: |
           cd iac_tf
-          terraform init -reconfigure \
-            -backend-config="bucket=my-terraform-state-us-east1-unique" \
-            -backend-config="key=terraform/terraform.tfstate" \
-            -backend-config="region=${AWS_REGION}" \
-            -backend-config="encrypt=true"
+          terraform init -reconfigure
 
       - name: Terraform Apply or Destroy
         run: |
