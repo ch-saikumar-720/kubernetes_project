@@ -3,15 +3,6 @@ name: Terraform Infrastructure
 on:
   workflow_dispatch:
     inputs:
-      env:
-        description: "Select environment"
-        required: true
-        default: "dev"
-        type: choice
-        options:
-          - dev
-          - test
-          - prod
       region:
         description: "Select AWS region"
         required: true
@@ -36,7 +27,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TF_ENV: ${{ github.event.inputs.env }}
       AWS_REGION: ${{ github.event.inputs.region }}
       TF_ACTION: ${{ github.event.inputs.action }}
 
@@ -65,19 +55,14 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -backend-config="encrypt=true"
 
-      - name: Select/Create Terraform Workspace
-        run: |
-          cd iac_tf
-          terraform workspace select $TF_ENV || terraform workspace new $TF_ENV
-
       - name: Terraform Apply or Destroy
         run: |
           cd iac_tf
           if [[ "$TF_ACTION" == "apply" ]]; then
-            terraform plan -var="env=${TF_ENV}" -out=tfplan
+            terraform plan -out=tfplan
             terraform apply -auto-approve tfplan
           elif [[ "$TF_ACTION" == "destroy" ]]; then
-            terraform destroy -auto-approve -var="env=${TF_ENV}"
+            terraform destroy -auto-approve
           else
             echo "Invalid action: $TF_ACTION"
             exit 1
