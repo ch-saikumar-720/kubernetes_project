@@ -53,5 +53,5 @@ jobs:
         run: |
           cd iac
           terraform plan -var-file=${ENVIRONMENT}.tfvars  -out=tfplan
-          terraform apply tfplan -auto-approve
+          terraform apply tfplan
          
