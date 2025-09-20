@@ -56,12 +56,12 @@ jobs:
 
       - name: Terraform Init
         run: |
-          cd iac_tf
+          cd iac
           terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
 
       - name: Terraform Apply or Destroy
         run: |
-          cd iac_tf
+          cd iac
           if [[ "$TF_ACTION" == "apply" ]]; then
             terraform plan -var-file=${ENVIRONMENT}.tfvars
             terraform apply -var-file=${ENVIRONMENT}.tfvars -auto-approve tfplan
