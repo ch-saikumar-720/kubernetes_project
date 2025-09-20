@@ -62,12 +62,6 @@ jobs:
       - name: Terraform Apply or Destroy
         run: |
           cd iac
-          if [[ "$TF_ACTION" == "apply" ]]; then
             terraform plan -var-file=${ENVIRONMENT}.tfvars  -out=tfplan
             terraform apply -auto-approve
-          elif [[ "$TF_ACTION" == "destroy" ]]; then
-            terraform destroy -auto-approve
-          else
-            echo "Invalid action: $TF_ACTION"
-            exit 1
-          fi
+         
