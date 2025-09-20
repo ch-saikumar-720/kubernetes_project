@@ -15,7 +15,6 @@ on:
       environment:
         description: "Select Terraform environment"
         required: true
-        default: "apply"
         type: choice
         options:
           - dev
@@ -53,6 +52,6 @@ jobs:
       - name: Terraform Apply
         run: |
           cd iac
-            terraform plan -var-file=${ENVIRONMENT}.tfvars  -out=tfplan
-            terraform apply -auto-approve
+          terraform plan -var-file=${ENVIRONMENT}.tfvars  -out=tfplan
+          terraform apply tfplan -auto-approve
          
