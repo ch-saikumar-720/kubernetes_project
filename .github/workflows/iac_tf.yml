@@ -21,14 +21,6 @@ on:
           - dev
           - prod
           - tst
-      action:
-        description: "Select Terraform action"
-        required: true
-        default: "apply"
-        type: choice
-        options:
-          - apply
-          - destroy
 
 jobs:
   terraform:
