@@ -33,3 +33,7 @@ Thumbs.db
 *.bak
 *.tmp
 
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
