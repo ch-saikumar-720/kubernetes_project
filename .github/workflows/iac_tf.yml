@@ -20,7 +20,14 @@ on:
         options:
           - apply
           - destroy
-
+      environment:
+        description: "Select Terraform environment"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - dev
+          - prod
 jobs:
   terraform:
     name: Terraform ${{ github.event.inputs.action }}
@@ -29,6 +36,7 @@ jobs:
     env:
       AWS_REGION: ${{ github.event.inputs.region }}
       TF_ACTION: ${{ github.event.inputs.action }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout repository
@@ -49,16 +57,16 @@ jobs:
       - name: Terraform Init
         run: |
           cd iac_tf
-          terraform init -reconfigure
+          terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
 
       - name: Terraform Apply or Destroy
         run: |
           cd iac_tf
           if [[ "$TF_ACTION" == "apply" ]]; then
-            terraform plan -out=tfplan
-            terraform apply -auto-approve tfplan
+            terraform plan -var-file=${ENVIRONMENT}.tfvars
+            terraform apply -var-file=${ENVIRONMENT}.tfvars -auto-approve tfplan
           elif [[ "$TF_ACTION" == "destroy" ]]; then
-            terraform destroy -auto-approve
+            terraform destroy -var-file=${ENVIRONMENT}.tfvars-auto-approve
           else
             echo "Invalid action: $TF_ACTION"
             exit 1
