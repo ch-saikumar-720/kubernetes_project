@@ -8,4 +8,8 @@ variable "instance_type" {
   description = "EC2 instance type"
 }
 
-
+variable "key_name" {
+  description = "Name of the EC2 key pair"
+  type        = string
+  default     = "my-keypair"
+}
