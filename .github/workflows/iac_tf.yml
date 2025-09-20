@@ -12,6 +12,15 @@ on:
           - us-east-1
           - us-west-2
           - us-east-2
+      environment:
+        description: "select environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - prod
+          - tst
       action:
         description: "Select Terraform action"
         required: true
@@ -29,6 +38,7 @@ jobs:
     env:
       AWS_REGION: ${{ github.event.inputs.region }}
       TF_ACTION: ${{ github.event.inputs.action }}
+      ENVIRONMENT : ${{ github.event.inputs.environment}}
 
     steps:
       - name: Checkout repository
@@ -46,17 +56,22 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: Terraform format
+        run: |
+          cd iac
+          terraform fmt -recursive
+          
       - name: Terraform Init
         run: |
-          cd iac_tf
-          terraform init -reconfigure
-
+          cd iac
+          terraform init -backend-config= backend-${{env.ENVIRONMENT}}.tf -reconfigure
+          
       - name: Terraform Apply or Destroy
         run: |
-          cd iac_tf
+          cd iac
           if [[ "$TF_ACTION" == "apply" ]]; then
-            terraform plan -out=tfplan
-            terraform apply -auto-approve tfplan
+            terraform plan -var-file= ${{env.ENVIRONMENT}}.tfvars
+            terraform apply -var-file= ${{env.ENVIRONMENT}}.tfvars -auto-approve tfplan
           elif [[ "$TF_ACTION" == "destroy" ]]; then
             terraform destroy -auto-approve
           else
