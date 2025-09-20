@@ -2,31 +2,53 @@ name: Terraform Infrastructurex
 
 on: workflow_dispatch:
     inputs:
-      region: description: "Select AWS region" required: true default: "us-east-1" type: choice options:
-          - us-east-1 - us-west-2 - us-east-2
-      environment: type: choice options:
-          - dev - prod
-jobs: terraform:
-    name: Terraform ${{ github.event.inputs.action }} runs-on: ubuntu-latest
+      region:
+        description: "Select AWS region"
+        required: true
+        default: "us-east-1"
+        type: choice
+        options:
+          - us-east-1
+          - us-west-2
+          - us-east-2
+      environment:
+        description: "Select Terraform environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+jobs:
+  terraform:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
 
-    env: AWS_REGION: ${{ github.event.inputs.region }} ENVIRONMENT : ${{ github.event.inputs.environment}}
+    env:
+      AWS_REGION: ${{ github.event.inputs.region }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
 
-    steps: - name: Checkout repository
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials uses: aws-actions/configure-aws-credentials@v3 with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
+      - name: Configure AWS credentials 
+          uses: aws-actions/configure-aws-credentials@v3 
+          with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} 
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Setup Terraform uses: hashicorp/setup-terraform@v2 with:
-          terraform_version: 1.5.7
+      - name: Setup Terraform 
+        uses: hashicorp/setup-terraform@v2 with:terraform_version: 1.5.7
 
-      - name: Terraform format run: |
-          cd iac terraform fmt -recursive
-          
-      - name: Terraform Init run: |
-          cd iac terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
+      - name: Terraform Init
+        run: |
+          cd iac
+          terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
 
-      - name: Terraform Apply run: |
-          cd iac terraform plan -var-file=${ENVIRONMENT}.tfvars -out=tfplan terraform apply tfplan
+      - name: Terraform Apply
+        run: |
+          cd iac
+          terraform plan -var-file=${ENVIRONMENT}.tfvars  -out=tfplan
+          terraform apply tfplan
          
