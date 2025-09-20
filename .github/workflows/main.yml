@@ -1,35 +1,33 @@
-name: Terraform Infrastructurex 
+name: Terraform Destroy
 
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: "Select Terraform environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
       region:
         description: "Select AWS region"
         required: true
-        default: "us-east-1"
+        default: us-east-1
         type: choice
         options:
           - us-east-1
           - us-west-2
           - us-east-2
-      environment:
-        description: "select environment"
-        required: true
-        default: "dev"
-        type: choice
-        options:
-          - dev
-          - prod
-          - tst
 
 jobs:
   terraform:
-    name: Terraform ${{ github.event.inputs.action }}
+    name: Terraform Destroy
     runs-on: ubuntu-latest
 
     env:
       AWS_REGION: ${{ github.event.inputs.region }}
-      ENVIRONMENT : ${{ github.event.inputs.environment}}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout repository
@@ -47,18 +45,12 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Terraform format
-        run: |
-          cd iac
-          terraform fmt -recursive
-          
       - name: Terraform Init
         run: |
           cd iac
           terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
-          
-      - name: Terraform Apply 
+
+      - name: Terraform Destroy
         run: |
           cd iac
-            terraform plan -var-file=${ENVIRONMENT}.tfvars 
-            terraform apply -var-file=${ENVIRONMENT}.tfvars -auto-approve
+          terraform destroy -var-file=${ENVIRONMENT}.tfvars -auto-approve
