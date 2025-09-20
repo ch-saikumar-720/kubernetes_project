@@ -64,7 +64,7 @@ jobs:
       - name: Terraform Init
         run: |
           cd iac
-          terraform init -backend-config=backend-${{env.ENVIRONMENT}}.tf -reconfigure
+          terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
           
       - name: Terraform Apply or Destroy
         run: |
