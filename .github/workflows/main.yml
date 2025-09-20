@@ -50,7 +50,12 @@ jobs:
           cd iac
           terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
 
+      - name: Terraform Plan (Destroy)
+        run: |
+          cd iac
+          terraform plan -destroy -var-file=${ENVIRONMENT}.tfvars -out=tfplan
+
       - name: Terraform Destroy
         run: |
           cd iac
-          terraform destroy -var-file=${ENVIRONMENT}.tfvars -auto-approve
+          terraform apply -auto-approve tfplan
