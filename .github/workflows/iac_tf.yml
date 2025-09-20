@@ -12,14 +12,6 @@ on:
           - us-east-1
           - us-west-2
           - us-east-2
-      action:
-        description: "Select Terraform action"
-        required: true
-        default: "apply"
-        type: choice
-        options:
-          - apply
-          - destroy
       environment:
         description: "Select Terraform environment"
         required: true
@@ -35,7 +27,6 @@ jobs:
 
     env:
       AWS_REGION: ${{ github.event.inputs.region }}
-      TF_ACTION: ${{ github.event.inputs.action }}
       ENVIRONMENT: ${{ github.event.inputs.environment }}
 
     steps:
@@ -59,7 +50,7 @@ jobs:
           cd iac
           terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
 
-      - name: Terraform Apply or Destroy
+      - name: Terraform Apply
         run: |
           cd iac
             terraform plan -var-file=${ENVIRONMENT}.tfvars  -out=tfplan
