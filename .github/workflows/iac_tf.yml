@@ -70,8 +70,8 @@ jobs:
         run: |
           cd iac
           if [[ "$TF_ACTION" == "apply" ]]; then
-            terraform plan -var-file=${ENVIRONMENT}.tfvars
-            terraform apply -var-file=${ENVIRONMENT}.tfvars -auto-approve tfplan
+            terraform plan -var-file=${ENVIRONMENT}.tfvars -out=${ENVIRONMENT}tfplan
+            terraform apply -var-file=${ENVIRONMENT}.tfvars -auto-approve ${ENVIRONMENT}tfplan
           elif [[ "$TF_ACTION" == "destroy" ]]; then
             terraform destroy -auto-approve
           else
