@@ -55,18 +55,15 @@ jobs:
           cd iac
           terraform plan -var-file=${ENVIRONMENT}.tfvars -out=tfplan
 
-      - name: Upload tfplan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: iac/tfplan
-
   Apply:
     needs: Plan
     runs-on: ubuntu-latest
     environment:
       name: apply-approval   # <-- Manual approval required
       url: https://github.com/${{ github.repository }}/actions
+    env:
+      AWS_REGION: ${{ github.event.inputs.region }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout repository
@@ -77,18 +74,21 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ github.event.inputs.region }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
+      - name: Terraform Init
+        run: |
+          cd iac
+          terraform init -backend-config=backend-${ENVIRONMENT}.conf -reconfigure
 
-      - name: Download tfplan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: iac
+      - name: Terraform Plan
+        run: |
+          cd iac
+          terraform plan -var-file=${ENVIRONMENT}.tfvars -out=tfplan
 
       - name: Terraform Apply
         run: |
