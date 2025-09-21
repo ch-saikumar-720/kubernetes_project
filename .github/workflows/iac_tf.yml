@@ -58,7 +58,7 @@ jobs:
       plan-file: tfplan
 
   apply:
-    needs: plan
+    needs: Terraform Plan
     runs-on: ubuntu-latest
     environment:
       name: apply-approval   # <-- This enables manual approval
