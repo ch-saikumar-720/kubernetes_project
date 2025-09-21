@@ -14,7 +14,7 @@ module "eks" {
   eks_version          = var.eks_version
   eks_cluster_role_arn = var.eks_cluster_role_arn
   eks_node_role_arn    = var.eks_node_role_arn
-  subnet_ids           = concat(module.vpc.public_subnets, module.vpc.private_subnets)
+  subnet_ids           = module.vpc.public_subnets
   node_instance_type   = var.node_instance_type
   desired_capacity     = var.desired_capacity
 }
