@@ -22,13 +22,11 @@ on:
 
 jobs:
   Plan:
-    name: Terraform Apply
+    name: Terraform Plan
     runs-on: ubuntu-latest
-
     env:
       AWS_REGION: ${{ github.event.inputs.region }}
       ENVIRONMENT: ${{ github.event.inputs.environment }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,18 +52,26 @@ jobs:
         run: |
           cd iac
           terraform plan -var-file=${ENVIRONMENT}.tfvars -out=tfplan
-    outputs:
-      plan-file: tfplan
+
+      - name: Upload tfplan
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfplan
+          path: iac/tfplan
 
   Apply:
     needs: Plan
     runs-on: ubuntu-latest
     environment:
-      name: apply-approval   # <-- This enables manual approval
+      name: apply-approval   # <-- manual approval before this job runs
       url: https://github.com/${{ github.repository }}/actions
+    env:
+      AWS_REGION: ${{ github.event.inputs.region }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -77,10 +83,13 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
-      - name: Terraform Plan
-        run: |
-          cd iac
-          terraform plan -var-file=${ENVIRONMENT}.tfvars -out=tfplan
+
+      - name: Download tfplan
+        uses: actions/download-artifact@v3
+        with:
+          name: tfplan
+          path: iac
+
       - name: Terraform Apply
         run: |
           cd iac
