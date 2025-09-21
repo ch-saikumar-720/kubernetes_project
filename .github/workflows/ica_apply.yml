@@ -54,8 +54,20 @@ jobs:
         run: |
           cd iac
           terraform plan -var-file=${ENVIRONMENT}.tfvars -out=tfplan
+    outputs:
+      plan-file: tfplan
 
+  apply:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment:
+      name: apply-approval   # <-- This enables manual approval
+      url: https://github.com/${{ github.repository }}/actions
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Terraform Apply
         run: |
           cd iac
-          terraform apply -auto-approve tfplan
+          terraform apply tfplan
+
