@@ -1,15 +1,11 @@
-variable "ami_id" {
-  type        = string
-  description = "AMI ID"
-}
-
+variable "subnet_id" {}
+variable "vpc_id" {}
 variable "instance_type" {
-  type        = string
-  description = "EC2 instance type"
+  default = "t3.micro"
 }
-
 variable "key_name" {
-  description = "Name of the EC2 key pair"
-  type        = string
-  default     = "my-keypair"
+  description = "EC2 key pair name"
+}
+variable "ami_id" {
+  description = "AMI ID for EC2 instance"
 }

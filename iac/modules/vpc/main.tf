@@ -1,11 +1,33 @@
-# Data source: Get the default VPC
-data "aws_vpc" "default" {
-  default = true
-}
+resource "aws_vpc" "vpc" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_support   = true
+  enable_dns_hostnames = true
 
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+  tags = {
+    Name = "${var.project_name}-vpc"
   }
 }
+
+resource "aws_subnet" "public" {
+  count                   = length(var.public_subnet_cidrs)
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = element(var.azs, count.index)
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.project_name}-public-${count.index + 1}"
+  }
+}
+
+resource "aws_subnet" "private" {
+  count             = length(var.private_subnet_cidrs)
+  vpc_id            = aws_vpc.vpc.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = element(var.azs, count.index)
+
+  tags = {
+    Name = "${var.project_name}-private-${count.index + 1}"
+  }
+}
+

@@ -1,27 +1,15 @@
-resource "aws_instance" "ec2" {
-  ami                         = var.ami_id
-  instance_type               = var.instance_type
-  key_name                    = var.key_name
-  subnet_id                   = data.aws_subnets.default.ids[0]
-  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
-  associate_public_ip_address = true
-
-  tags = {
-    Name = "Project1"
-  }
-}
-
+# Security group for EC2
 resource "aws_security_group" "ec2_sg" {
   name        = "ec2-sg"
   description = "Allow SSH and HTTP"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] # change for security
   }
 
   ingress {
@@ -44,15 +32,16 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
-# Get Default VPC
-data "aws_vpc" "default" {
-  default = true
-}
+# EC2 instance in public subnet
+resource "aws_instance" "ec2" {
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  subnet_id                   = var.subnet_id
+  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
+  key_name                    = var.key_name
+  associate_public_ip_address = true
 
-# Get Default Subnets
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+  tags = {
+    Name = "Public-EC2"
   }
 }
