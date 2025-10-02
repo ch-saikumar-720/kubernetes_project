@@ -9,11 +9,11 @@ app = Flask(__name__)
 CORS(app)
 bcrypt = Bcrypt(app)
 
-# Database Configuration (Replace with your AWS RDS credentials)
-DB_HOST = "public-mysql-db.co9uaqwkoizy.us-east-1.rds.amazonaws.com"
-DB_USER = "admin"
-DB_PASSWORD = "YourStrongPass123!"
-DB_NAME = "mydatabase"
+# Database Configuration from ENV variables
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "mydatabase")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -27,16 +27,13 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
-# Initialize the database
 with app.app_context():
     db.create_all()
 
-# **Root Route ("/")**
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({"message": "This is my backend application"}), 200
 
-# **Signup Route**
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -50,7 +47,6 @@ def signup():
     except:
         return jsonify({"message": "User already exists"}), 400
 
-# **Login Route**
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -62,6 +58,4 @@ def login():
         return jsonify({"message": "Invalid credentials"}), 401
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
-
+    app.run(host='0.0.0.0', port=5000)
