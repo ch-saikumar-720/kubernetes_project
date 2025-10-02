@@ -16,28 +16,25 @@ spec:
     spec:
       containers:
       - name: backend
-        image: 876083391710.dkr.ecr.us-east-1.amazonaws.com/project1:backend
+        image: my-backend:latest   # <-- your backend Docker image
         ports:
         - containerPort: 5000
-        env:
-        - name: DB_HOST
-          value: "public-mysql-db.co9uaqwkoizy.us-east-1.rds.amazonaws.com"
-        - name: DB_USER
-          value: "admin"
-        - name: DB_PASSWORD
-          value: "YourStrongPass123!"
-        - name: DB_NAME
-          value: "mydatabase"
----
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets
+-----
+
 apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
 spec:
-  type: LoadBalancer
   selector:
     app: backend
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 5000
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP
