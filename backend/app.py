@@ -30,11 +30,13 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
-@app.route('/', methods=['GET'])
+# Root health check
+@app.route('/api', methods=['GET'])
 def home():
     return jsonify({"message": "This is my backend application"}), 200
 
-@app.route('/signup', methods=['POST'])
+# Signup endpoint
+@app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.json
     hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
@@ -47,7 +49,8 @@ def signup():
     except:
         return jsonify({"message": "User already exists"}), 400
 
-@app.route('/login', methods=['POST'])
+# Login endpoint
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
     user = User.query.filter_by(email=data['email']).first()
