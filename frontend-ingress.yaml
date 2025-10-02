@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
 spec:
   rules:
-  - host: frontend.example.com   # <-- change this to your domain or use "*"
+  - host: "*"  # <-- change this to your domain or use "*"
     http:
       paths:
       - path: /
