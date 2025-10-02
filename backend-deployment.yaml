@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: 1  # Increase replicas for high availability
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: 876083391710.dkr.ecr.us-east-1.amazonaws.com/project1:backend
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DB_HOST
+              value: "public-mysql-db.co9uaqwkoizy.us-east-1.rds.amazonaws.com"
+            - name: DB_USER
+              value: "admin"
+            - name: DB_PASSWORD
+              value: "YourStrongPass123!"
+            - name: DB_NAME
+              value: "mydatabase"
