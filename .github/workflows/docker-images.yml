@@ -1,0 +1,50 @@
+name: Build and Push Docker Image to ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      folder:
+        description: "Select the folder to build (frontend or backend)"
+        required: true
+        default: frontend
+      version:
+        description: "Specify the Docker image version/tag (e.g., v1.0.0)"
+        required: true
+        default: "v1.0.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      FOLDER: ${{ github.event.inputs.folder }}
+      VERSION: ${{ github.event.inputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate folder input
+        run: |
+          if [[ "$FOLDER" != "frontend" && "$FOLDER" != "backend" ]]; then
+            echo "Invalid folder: $FOLDER. Must be 'frontend' or 'backend'."
+            exit 1
+          fi
+          echo "Building folder: $FOLDER"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          DOCKER_IMAGE=${{ steps.login-ecr.outputs.registry }}/$FOLDER:$VERSION
+          echo "Building image $DOCKER_IMAGE from folder ./$FOLDER"
+          docker build -t $DOCKER_IMAGE ./$FOLDER
+          docker push $DOCKER_IMAGE
+          echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_ENV
