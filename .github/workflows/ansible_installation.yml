@@ -1,15 +1,12 @@
-name: Configure EC2 with Ansible
+name: Configure EC2 dynamically with Ansible
 
 on:
   workflow_dispatch:
     inputs:
-      ec2_ip:
-        description: "Public IP of the EC2 instance"
+      ec2_tag:
+        description: "Tag Name of the EC2 instance (e.g., my-ec2)"
         required: true
-      eks_cluster_name:
-        description: "Name of the EKS cluster"
-        required: true
-      region:
+      aws_region:
         description: "AWS Region"
         required: true
         default: us-east-1
@@ -24,9 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      EC2_IP: ${{ github.event.inputs.ec2_ip }}
-      EKS_CLUSTER_NAME: ${{ github.event.inputs.eks_cluster_name }}
-      AWS_REGION: ${{ github.event.inputs.region }}
+      AWS_REGION: ${{ github.event.inputs.aws_region }}
 
     steps:
       - name: Checkout repository
@@ -38,11 +33,30 @@ jobs:
           sudo apt-get install -y python3-pip sshpass unzip curl
           pip3 install ansible boto3
 
-      - name: Configure EC2 with Ansible
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Fetch EC2 Public IP by Tag
+        id: get-ip
         run: |
-          ansible-playbook -i "$EC2_IP," configure_ec2.yml \
-          --extra-vars "aws_region=${{ env.AWS_REGION }} eks_cluster_name=${{ env.EKS_CLUSTER_NAME }}" \
-          --ssh-extra-args "-o StrictHostKeyChecking=no -i ./your_key.pem"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          EC2_IP=$(aws ec2 describe-instances \
+            --region ${{ env.AWS_REGION }} \
+            --filters "Name=tag:Name,Values=${{ github.event.inputs.ec2_tag }}" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].PublicIpAddress" \
+            --output text)
+          echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
+
+      - name: Write SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i "$EC2_IP," configure_servers.yml \
+            --extra-vars "aws_region=${{ env.AWS_REGION }}" \
+            --ssh-extra-args "-o StrictHostKeyChecking=no -i ./ec2_key.pem"
