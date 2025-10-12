@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend-deployment
+        image: 876083391710.dkr.ecr.us-east-1.amazonaws.com/backend:backend_v1
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DB_HOST
+          value: public-mysql-db.co9uaqwkoizy.us-east-1.rds.amazonaws.com
+        - name: DB_PASSWORD
+          value: YourStrongPass123!
+        - name: DB_USER
+          value: admin
