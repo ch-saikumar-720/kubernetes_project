@@ -41,9 +41,19 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Map folder to ECR repository
+        run: |
+          if [[ "$FOLDER" == "frontend" ]]; then
+            REPO_NAME=frontend
+          else
+            REPO_NAME=backend
+          fi
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         run: |
-          DOCKER_IMAGE=${{ steps.login-ecr.outputs.registry }}/$FOLDER:$VERSION
+          # Build image with versioned tag
+          DOCKER_IMAGE=${{ steps.login-ecr.outputs.registry }}/$REPO_NAME:$REPO_NAME"_"$VERSION
           echo "Building image $DOCKER_IMAGE from folder ./$FOLDER"
           docker build -t $DOCKER_IMAGE ./$FOLDER
           docker push $DOCKER_IMAGE
